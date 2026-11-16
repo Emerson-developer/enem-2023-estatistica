@@ -101,7 +101,8 @@ code{font-size:12px;background:#f1efea;padding:1px 4px;border-radius:4px}
 <p class="muted small">Histograma em proporção de participantes, classes de 40 pontos. A redação vai de 0 a 1.000 em passos de 20.</p></div>
 <div class="pv-card" id="cat-pop"><h3>Frequências de variável qualitativa</h3>
 <label class="pv-ctl">Variável <select class="dash-select" data-param="vc1" aria-label="Variável qualitativa"><option value="escola">Tipo de escola</option><option value="sexo">Sexo</option><option value="renda">Renda familiar</option><option value="regiao">Região</option><option value="internet">Internet em casa</option><option value="situacao">Situação no ensino médio</option></select></label>
-<div class="pv-chart" data-draw="cat" data-main="pop_freq" data-param="vc1" data-source="pop_freq"></div></div>
+<div class="pv-chart" data-draw="cat" data-main="pop_freq" data-param="vc1" data-source="pop_freq"></div>
+<div class="pv-scroll"><table class="pv-table" data-source="pop_freq"><thead><tr><th>Categoria</th><th>Frequência (população)</th><th>Proporção</th></tr></thead><tbody data-draw="freqtab" data-main="pop_freq" data-param="vc1"></tbody></table></div></div>
 </div>
 </section>
 
@@ -137,7 +138,8 @@ code{font-size:12px;background:#f1efea;padding:1px 4px;border-radius:4px}
 <p class="muted small">Histograma em proporção de participantes, classes de 40 pontos. A redação vai de 0 a 1.000 em passos de 20.</p></div>
 <div class="pv-card" id="cat-amo"><h3>Frequências de variável qualitativa</h3>
 <label class="pv-ctl">Variável <select class="dash-select" data-param="vc2" aria-label="Variável qualitativa"><option value="escola">Tipo de escola</option><option value="sexo">Sexo</option><option value="renda">Renda familiar</option><option value="regiao">Região</option><option value="internet">Internet em casa</option><option value="situacao">Situação no ensino médio</option></select></label><p class="pv-leg"><i class="sw s0"></i> Amostra <i class="sw s1"></i> População (referência)</p>
-<div class="pv-chart" data-draw="cat" data-main="amo_freq" data-ref="pop_freq" data-param="vc2" data-source="amo_freq pop_freq"></div></div>
+<div class="pv-chart" data-draw="cat" data-main="amo_freq" data-ref="pop_freq" data-param="vc2" data-source="amo_freq pop_freq"></div>
+<div class="pv-scroll"><table class="pv-table" data-source="amo_freq"><thead><tr><th>Categoria</th><th>Frequência (amostra)</th><th>Proporção</th></tr></thead><tbody data-draw="freqtab" data-main="amo_freq" data-param="vc2"></tbody></table></div></div>
 </div>
 <h2 id="amo-dif">Amostra vs população</h2>
 <div class="pv-card"><div class="pv-scroll"><table class="pv-table" id="tabela-dif" data-source="dif_desc" data-row-key="variavel">
@@ -382,6 +384,23 @@ function tip(el) {
 }
 function fail(el, d) { el.replaceChildren(); if (d && d.status === 'error') { const p = document.createElement('p'); p.className = 'muted'; p.textContent = 'Falha ao carregar'; el.appendChild(p); } else el.textContent = '—'; }
 function axisStyle(g) { g.selectAll('text').attr('class', 'tick-t'); g.selectAll('line,path').style('stroke', 'var(--cds-chart-axis)'); }
+
+
+// ---------- tabela de frequências ----------
+dash.draw('freqtab', (tb) => {
+  const d = dash.data(tb.dataset.main);
+  tb.replaceChildren();
+  if (d.status !== 'ok') return;
+  const v = P(tb.dataset.param, 'escola'), o = ORIG();
+  const rows = d.data.filter((r) => r.escola === o && r.variavel === v).sort((a, b) => b.n - a.n);
+  const tot = rows.reduce((s, r) => s + r.n, 0);
+  rows.concat([{categoria: 'Total', n: tot, prop: 1}]).forEach((r) => {
+    const tr = document.createElement('tr');
+    [[r.categoria, ''], [F.int(r.n), 'num'], [F.pct1(r.prop), 'num']].forEach(([t, c]) => { const td = document.createElement('td'); td.textContent = t; if (c) td.className = c; tr.appendChild(td); });
+    if (r.categoria === 'Total') tr.style.fontWeight = '600';
+    tb.appendChild(tr);
+  });
+});
 
 // ---------- histograma ----------
 dash.draw('hist', (el) => {
